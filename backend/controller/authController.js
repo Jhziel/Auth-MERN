@@ -2,29 +2,30 @@ import { User } from "../model/User.js";
 import bcryptjs from "bcryptjs";
 import { generateVerificationToken } from "../utils/generateVerificationToken.js";
 import { generateTokenAndSetCookie } from "../utils/generateTokeAndSetCookie.js";
+import { sendVerificationEmail } from "../mailtrap/email.js";
 
 export const signUp = async (req, res) => {
   const { email, password, name } = req.body;
 
   try {
-    //Check if all fields are filled
+    //Check if All fields are meet
     if (!email || !password || !name) {
-      throw new Error("All fields is required");
+      throw new Error("All fields are required");
     }
 
-    const userAlreadyExists = await User.findOne({ email });
+    //Check if User already Exists
+    const userExists = await User.findOne({ email });
 
-    //Check if User already Exists within the Database
-    if (userAlreadyExists) {
+    if (userExists) {
       return res
         .status(400)
-        .json({ success: false, message: "User already Exists" });
+        .json({ success: false, message: "User already Exists " });
     }
 
     //Hash the password
     const hashedPassword = await bcryptjs.hash(password, 10);
 
-    //Generate verification Token
+    //generate Verification Token
     const verificationToken = generateVerificationToken();
 
     //Create the User
@@ -32,8 +33,8 @@ export const signUp = async (req, res) => {
       email,
       password: hashedPassword,
       name,
-      verificationToken,
-      verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000,
+      verificationToken: verificationToken,
+      verificationTokenExpiresAt: Date.now() + 15 * 60 * 1000,
     });
 
     await user.save();
@@ -41,10 +42,17 @@ export const signUp = async (req, res) => {
     //jwt
     generateTokenAndSetCookie(res, user._id);
 
+    //send VerificationToken on email
+    await sendVerificationEmail(user.email, verificationToken);
+
+    //return the created user
     res.status(201).json({
       success: true,
-      message: "User created Successfully",
-      user: { ...user._doc, password: undefined },
+      message: "User Successfully Created",
+      user: {
+        ...user._doc,
+        password: undefined,
+      },
     });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });

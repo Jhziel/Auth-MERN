@@ -7,7 +7,7 @@ import {
   signUp,
   verifyEmail,
   checkAuth,
-} from "../controller/authController.js";
+} from "../controllers/auth.controllers.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 const router = express.Router();
 

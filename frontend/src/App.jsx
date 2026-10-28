@@ -7,6 +7,7 @@ import EmailVerificationPage from "./pages/EmailVerificationPage";
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
 import { useEffect } from "react";
+import LoadingSpinner from "./components/LoadingSpinner";
 
 //protect routes require authentication
 const ProtectRoute = ({ children }) => {
@@ -34,13 +35,13 @@ const RedirectAuthenticatedUser = ({ children }) => {
 };
 
 const App = () => {
-  const { isCheckingAuth, checkAuth, isAuthenticated, user } = useAuthStore();
+  const { isCheckingAuth, checkAuth } = useAuthStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
-  console.log("isAuthenticated", isAuthenticated);
-  console.log("user", user);
+
+  if (isCheckingAuth) return <LoadingSpinner />;
   return (
     <>
       <div
